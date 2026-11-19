@@ -95,7 +95,7 @@ Repos
 
 | Service | Location |
 |---|---|
-| This repo (Worker + API wrapper) | [`cf-knowledge-query`](https://github.com/bganguly/cf-knowledge-query) |
+| This repo (Worker + API wrapper) | [`lm-knowledge-chatbot`](https://github.com/bganguly/lm-knowledge-chatbot) |
 | Core pipeline (BM25 + LLM logic) | [`knowledge-system-hackathon`](https://github.com/bganguly/knowledge-system-hackathon) |
 
 * * *

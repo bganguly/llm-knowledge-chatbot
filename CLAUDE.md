@@ -1,4 +1,4 @@
-# Claude Instructions — cf-knowledge-query
+# Claude Instructions — lm-knowledge-chatbot
 
 ## Copied files — sync before editing
 

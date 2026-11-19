@@ -1,5 +1,5 @@
 {
-  "name": "cf-knowledge-query-worker",
+  "name": "lm-knowledge-chatbot-worker",
   "version": "1.0.0",
   "private": true,
   "scripts": {
