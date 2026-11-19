@@ -21,6 +21,28 @@ _CF=0
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
+_LOG_FILE="${TMPDIR:-/tmp}/llm-kb-deploy-$$.log"
+
+_spin() {
+  local label="$1"; shift
+  local frames='⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏'
+  local i=0
+  printf '  %s ...' "$label"
+  "$@" >> "$_LOG_FILE" 2>&1 &
+  local pid=$!
+  while kill -0 "$pid" 2>/dev/null; do
+    printf '\r  %s %s' "${frames:$(( i % ${#frames} )):1}" "$label"
+    i=$(( i + 1 ))
+    sleep 0.15
+  done
+  wait "$pid" && printf '\r  ✓ %-50s\n' "$label" || {
+    printf '\r  ✗ %-50s\n' "$label"
+    printf '\n  Last log lines (%s):\n' "$_LOG_FILE"
+    tail -20 "$_LOG_FILE" | sed 's/^/    /'
+    return 1
+  }
+}
+
 _chk() {
   local n="$1" label="$2" ok="$3" detail="${4:-}"
   if [[ "$ok" == "1" ]]; then
@@ -127,18 +149,20 @@ _resolve_project() {
 _ensure_service_account() {
   SA_EMAIL="${SA_NAME}@${GCP_PROJECT}.iam.gserviceaccount.com"
   if ! gcloud iam service-accounts describe "$SA_EMAIL" --project="$GCP_PROJECT" &>/dev/null; then
-    printf '  Creating service account %s...\n' "$SA_EMAIL"
-    gcloud iam service-accounts create "$SA_NAME" \
-      --display-name="LLM KB Cloud Run SA" \
-      --project="$GCP_PROJECT"
+    _spin "Creating service account $SA_NAME" \
+      gcloud iam service-accounts create "$SA_NAME" \
+        --display-name="LLM KB Cloud Run SA" \
+        --project="$GCP_PROJECT"
   fi
-  gcloud projects add-iam-policy-binding "$GCP_PROJECT" \
-    --member="serviceAccount:${SA_EMAIL}" \
-    --role="roles/secretmanager.secretAccessor" --quiet 2>/dev/null || true
+  _spin "Binding IAM policy" \
+    gcloud projects add-iam-policy-binding "$GCP_PROJECT" \
+      --member="serviceAccount:${SA_EMAIL}" \
+      --role="roles/secretmanager.secretAccessor" --quiet
 }
 
 _setup_secrets() {
-  gcloud services enable secretmanager.googleapis.com --project "$GCP_PROJECT" --quiet 2>/dev/null
+  _spin "Enabling Secret Manager API" \
+    gcloud services enable secretmanager.googleapis.com --project "$GCP_PROJECT" --quiet
 
   [[ -f "$ROOT/.env" ]] && source "$ROOT/.env"
   for _sib in "$ROOT"/../*/.env; do
@@ -157,7 +181,7 @@ _setup_secrets() {
 # ── Build image ───────────────────────────────────────────────────────────────
 
 _build_image() {
-  gcloud services enable \
+  _spin "Enabling GCP APIs" gcloud services enable \
     artifactregistry.googleapis.com \
     run.googleapis.com \
     cloudbuild.googleapis.com \
@@ -165,11 +189,11 @@ _build_image() {
 
   if ! gcloud artifacts repositories describe "$AR_REPO" \
        --project="$GCP_PROJECT" --location="$GCP_REGION" &>/dev/null; then
-    printf '  Creating Artifact Registry repo %s...\n' "$AR_REPO"
-    gcloud artifacts repositories create "$AR_REPO" \
-      --repository-format=docker \
-      --location="$GCP_REGION" \
-      --project="$GCP_PROJECT"
+    _spin "Creating Artifact Registry repo $AR_REPO" \
+      gcloud artifacts repositories create "$AR_REPO" \
+        --repository-format=docker \
+        --location="$GCP_REGION" \
+        --project="$GCP_PROJECT"
   fi
 
   AR_HOST="${GCP_REGION}-docker.pkg.dev"
@@ -188,14 +212,14 @@ _build_image() {
   cp -r "$ROOT/api/." "$_build_ctx/"
   cp -r "$_snapshots" "$_build_ctx/snapshots"
 
-  printf '  Building %s (bundling snapshots)...\n' "$BACKEND_SVC"
-  gcloud builds submit --tag "$BACKEND_IMAGE" --project "$GCP_PROJECT" "$_build_ctx"
+  _spin "Building image (gcloud builds submit)" \
+    gcloud builds submit --tag "$BACKEND_IMAGE" --project "$GCP_PROJECT" "$_build_ctx"
 }
 
 # ── Deploy to Cloud Run ───────────────────────────────────────────────────────
 
 _deploy_cloud_run() {
-  printf '  Deploying %s...\n' "$BACKEND_SVC"
+  _spin "Deploying $BACKEND_SVC to Cloud Run" \
   gcloud run deploy "$BACKEND_SVC" \
     --image="$BACKEND_IMAGE" \
     --region="$GCP_REGION" \
@@ -223,7 +247,7 @@ _set_worker_secret() {
   [[ "${_ANS:-Y}" =~ ^[Nn]$ ]] && return 0
   printf '  Running: wrangler secret put API_URL\n'
   cd "$ROOT/worker"
-  [[ -d node_modules ]] || npm install --silent
+  [[ -d node_modules ]] || _spin "npm install" npm install --silent
   printf '%s' "$BACKEND_URL" | npx wrangler secret put API_URL
   printf '  CF Worker API_URL set.\n'
 }
