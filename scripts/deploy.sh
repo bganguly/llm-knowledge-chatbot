@@ -205,6 +205,7 @@ _deploy_cloud_run() {
     --allow-unauthenticated \
     --min-instances=0 \
     --memory=1Gi \
+    --port=8080 \
     --timeout=300 \
     --quiet
 
