@@ -212,6 +212,13 @@ const conflictEl = document.getElementById("conflict-note");
 const sourcesWrap = document.getElementById("sources-wrap");
 const sourcesEl = document.getElementById("sources");
 
+questionEl.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    form.requestSubmit();
+  }
+});
+
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
   const question = questionEl.value.trim();
