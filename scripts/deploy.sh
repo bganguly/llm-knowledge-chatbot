@@ -242,8 +242,13 @@ _deploy_cloud_run() {
 # ── Wire CF Worker ────────────────────────────────────────────────────────────
 
 _set_worker_secret() {
-  printf '\nSet API_URL on CF Worker? [Y/n] (Y): '
-  read -r _ANS
+  printf '\n'
+  printf '┌─────────────────────────────────────────────────┐\n'
+  printf '│  Set API_URL secret on CF Worker?               │\n'
+  printf '│  Backend: %-38s│\n' "${BACKEND_URL##https://}"
+  printf '└─────────────────────────────────────────────────┘\n'
+  printf '  [Y/n] (default Y): '
+  read -r _ANS </dev/tty
   [[ "${_ANS:-Y}" =~ ^[Nn]$ ]] && return 0
   cd "$ROOT/worker"
   [[ -d node_modules ]] || _spin "npm install" npm install --silent
