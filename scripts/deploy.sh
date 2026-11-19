@@ -183,7 +183,7 @@ _build_image() {
 
   local _build_ctx
   _build_ctx=$(mktemp -d)
-  trap 'rm -rf "$_build_ctx"' EXIT
+  trap 'rm -rf "${_build_ctx:-}"' EXIT
 
   cp -r "$ROOT/api/." "$_build_ctx/"
   cp -r "$_snapshots" "$_build_ctx/snapshots"

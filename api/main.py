@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import os
 import sys
+import threading
 import time
 from pathlib import Path
 
@@ -29,21 +30,35 @@ app.add_middleware(
 )
 
 _ks: KnowledgeSystem | None = None
+_ready = False
+_ingest_error: str | None = None
+
+
+def _ingest_background():
+    global _ks, _ready, _ingest_error
+    try:
+        snapshots_path = os.environ.get("SNAPSHOTS_PATH")
+        if not snapshots_path:
+            _ingest_error = "SNAPSHOTS_PATH env var is required"
+            return
+        snaps = load_snapshots(snapshots_path)
+        if not snaps:
+            _ingest_error = f"No snapshots found in {snapshots_path}"
+            return
+        ks = KnowledgeSystem()
+        for snap in snaps:
+            ks.ingest(snap)
+        _ks = ks
+        _ready = True
+        print(f"Ingested {len(snaps)} snapshot(s)", flush=True)
+    except Exception as exc:
+        _ingest_error = str(exc)
+        print(f"Ingest failed: {exc}", flush=True)
 
 
 @app.on_event("startup")
 def _startup():
-    global _ks
-    snapshots_path = os.environ.get("SNAPSHOTS_PATH")
-    if not snapshots_path:
-        raise RuntimeError("SNAPSHOTS_PATH env var is required")
-    snaps = load_snapshots(snapshots_path)
-    if not snaps:
-        raise RuntimeError(f"No snapshots found in {snapshots_path}")
-    _ks = KnowledgeSystem()
-    for snap in snaps:
-        _ks.ingest(snap)
-    print(f"Ingested {len(snaps)} snapshot(s)", flush=True)
+    threading.Thread(target=_ingest_background, daemon=True).start()
 
 
 class QueryRequest(BaseModel):
@@ -66,13 +81,18 @@ class QueryResponse(BaseModel):
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "snapshots_loaded": _ks is not None}
+    return {
+        "status": "ok",
+        "ready": _ready,
+        "error": _ingest_error,
+    }
 
 
 @app.post("/query", response_model=QueryResponse)
 def query(req: QueryRequest):
-    if _ks is None:
-        raise HTTPException(503, "Knowledge system not ready")
+    if not _ready:
+        msg = f"Still loading: {_ingest_error}" if _ingest_error else "Still ingesting snapshots, please retry shortly"
+        raise HTTPException(503, msg)
     t0 = time.monotonic()
     ans: Answer = _ks.answer(req.question, as_of=req.as_of)
     ms = int((time.monotonic() - t0) * 1000)
