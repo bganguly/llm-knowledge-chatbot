@@ -1,4 +1,4 @@
-name = "lm-knowledge-chatbot"
+name = "llm-knowledge-chatbot"
 main = "index.js"
 compatibility_date = "2024-11-01"
 
