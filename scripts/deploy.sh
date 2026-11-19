@@ -242,14 +242,13 @@ _deploy_cloud_run() {
 # ── Wire CF Worker ────────────────────────────────────────────────────────────
 
 _set_worker_secret() {
-  printf '\nSet API_URL on CF Worker? [Y/n]: '
+  printf '\nSet API_URL on CF Worker? [Y/n] (Y): '
   read -r _ANS
   [[ "${_ANS:-Y}" =~ ^[Nn]$ ]] && return 0
-  printf '  Running: wrangler secret put API_URL\n'
   cd "$ROOT/worker"
   [[ -d node_modules ]] || _spin "npm install" npm install --silent
-  printf '%s' "$BACKEND_URL" | npx wrangler secret put API_URL
-  printf '  CF Worker API_URL set.\n'
+  _spin "Setting CF Worker API_URL secret" \
+    bash -c "printf '%s' '${BACKEND_URL}' | npx wrangler secret put API_URL"
 }
 
 # ── Persist config ────────────────────────────────────────────────────────────
