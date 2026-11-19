@@ -224,7 +224,7 @@ _set_worker_secret() {
   printf '  Running: wrangler secret put API_URL\n'
   cd "$ROOT/worker"
   [[ -d node_modules ]] || npm install --silent
-  printf '%s' "$BACKEND_URL" | npx wrangler secret put API_URL --stdin
+  printf '%s' "$BACKEND_URL" | npx wrangler secret put API_URL
   printf '  CF Worker API_URL set.\n'
 }
 
