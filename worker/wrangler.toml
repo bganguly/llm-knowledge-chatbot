@@ -1,0 +1,7 @@
+name = "cf-knowledge-query"
+main = "index.js"
+compatibility_date = "2024-11-01"
+
+[vars]
+# Set the real URL via: wrangler secret put API_URL
+# API_URL = "https://your-python-api.example.com"

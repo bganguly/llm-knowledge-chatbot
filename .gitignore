@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+.env
+snapshots/
+snapshots_zip/
+*.zip
+node_modules/
+.wrangler/
+dist/
