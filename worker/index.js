@@ -111,7 +111,7 @@ function buildUI(kbUrl) {
 <body>
 <header>
   <h1>Knowledge <span>Query</span></h1>
-  <p class="subtitle">Natural language queries over curated content snapshots · powered by Claude Haiku</p>
+  <p class="subtitle">Natural language queries over curated content snapshots · powered by Claude Haiku${kbUrl ? ' · <a href="' + kbUrl + '" target="_blank" rel="noopener noreferrer" style="color:var(--accent-hover);text-decoration:none">' + kbDisplay + '</a>' : ''}</p>
 </header>
 <div class="info-card">
   <p>${kbNote} Answers are grounded strictly in those snapshots — if the answer isn't there, it returns <strong>"I don't know"</strong> rather than guess.</p>
