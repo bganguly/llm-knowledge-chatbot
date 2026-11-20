@@ -7,5 +7,4 @@ type = "Text"
 globs = ["**/*.html"]
 
 [vars]
-# Set the real URL via: wrangler secret put API_URL
-# API_URL = "https://your-python-api.example.com"
+API_URL = "https://llm-kb-backend-77y7e2wykq-uc.a.run.app"

@@ -241,19 +241,13 @@ _deploy_cloud_run() {
 
 # ── Wire CF Worker ────────────────────────────────────────────────────────────
 
-_set_worker_secret() {
-  printf '\n'
-  printf '┌─────────────────────────────────────────────────┐\n'
-  printf '│  Set API_URL secret on CF Worker?               │\n'
-  printf '│  Backend: %-38s│\n' "${BACKEND_URL##https://}"
-  printf '└─────────────────────────────────────────────────┘\n'
-  printf '  [Y/n] (default Y): '
-  read -r _ANS </dev/tty
-  [[ "${_ANS:-Y}" =~ ^[Nn]$ ]] && return 0
-  cd "$ROOT/worker"
-  [[ -d node_modules ]] || _spin "npm install" npm install --silent
-  _spin "Setting CF Worker API_URL secret" \
-    bash -c "printf '%s' '${BACKEND_URL}' | npx wrangler secret put API_URL"
+_update_worker_url() {
+  local _toml="$ROOT/worker/wrangler.toml"
+  sed -i '' "s|^API_URL = .*|API_URL = \"${BACKEND_URL}\"|" "$_toml"
+  if ! grep -q "^API_URL" "$_toml"; then
+    printf '\nAPI_URL = "%s"\n' "$BACKEND_URL" >> "$_toml"
+  fi
+  printf '  Updated wrangler.toml API_URL → %s\n' "$BACKEND_URL"
 }
 
 # ── Persist config ────────────────────────────────────────────────────────────
@@ -306,7 +300,7 @@ else
   _setup_secrets
   _build_image
   _deploy_cloud_run
+  _update_worker_url
   _persist_config
-  _set_worker_secret
   _post_deploy_check
 fi

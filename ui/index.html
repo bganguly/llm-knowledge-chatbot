@@ -214,8 +214,6 @@
 <form id="form">
   <textarea id="question" placeholder="Ask a question about the knowledge base…" required></textarea>
   <div class="row">
-    <label for="as_of">Answer as of date (optional)</label>
-    <input type="date" id="as_of">
     <button type="submit" id="submit-btn">Ask</button>
   </div>
 </form>
@@ -233,7 +231,6 @@
 <script>
 const form = document.getElementById("form");
 const questionEl = document.getElementById("question");
-const asOfEl = document.getElementById("as_of");
 const submitBtn = document.getElementById("submit-btn");
 const resultEl = document.getElementById("result");
 const answerCard = document.getElementById("answer-card");
@@ -306,8 +303,6 @@ form.addEventListener("submit", async (e) => {
   resultEl.style.display = "flex";
 
   const payload = { question };
-  const asOf = asOfEl.value;
-  if (asOf) payload.as_of = asOf;
 
   try {
     const res = await fetch("/query", {
@@ -327,7 +322,6 @@ form.addEventListener("submit", async (e) => {
       metaEl.innerHTML = `
         <span class="badge ${data.confident ? "ok" : "warn"}">${data.confident ? "confident" : "uncertain"}</span>
         <span>${data.latency_ms} ms</span>
-        ${asOf ? `<span>as of ${asOf}</span>` : ""}
       `;
 
       if (data.conflict_note) {
