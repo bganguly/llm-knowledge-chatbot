@@ -13,25 +13,32 @@ export default {
     if (url.pathname === "/query" && request.method === "POST") {
       const apiUrl = env.API_URL;
       if (!apiUrl) {
-        return new Response(JSON.stringify({ error: "API_URL not configured" }), {
+        return new Response(JSON.stringify({ detail: "API_URL not configured" }), {
           status: 503,
           headers: { "Content-Type": "application/json" },
         });
       }
       const body = await request.text();
-      const upstream = await fetch(`${apiUrl}/query`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body,
-      });
-      const data = await upstream.text();
-      return new Response(data, {
-        status: upstream.status,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-      });
+      try {
+        const upstream = await fetch(`${apiUrl}/query`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body,
+        });
+        const data = await upstream.text();
+        return new Response(data, {
+          status: upstream.status,
+          headers: {
+            "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+          },
+        });
+      } catch (err) {
+        return new Response(JSON.stringify({ detail: "Backend unreachable — still waking up, please retry" }), {
+          status: 503,
+          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
+        });
+      }
     }
 
     if (url.pathname === "/health") {
