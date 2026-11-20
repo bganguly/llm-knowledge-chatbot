@@ -2,6 +2,10 @@ name = "llm-knowledge-chatbot"
 main = "index.js"
 compatibility_date = "2024-11-01"
 
+[[rules]]
+type = "Text"
+globs = ["**/*.html"]
+
 [vars]
 # Set the real URL via: wrangler secret put API_URL
 # API_URL = "https://your-python-api.example.com"
