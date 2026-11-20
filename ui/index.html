@@ -173,6 +173,28 @@
     display: inline-block;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
+
+  #wake-banner {
+    width: 100%;
+    max-width: 720px;
+    display: none;
+    align-items: center;
+    gap: 10px;
+    background: rgba(251,191,36,0.1);
+    border: 1px solid rgba(251,191,36,0.3);
+    border-radius: 8px;
+    color: #fbbf24;
+    font-size: 0.82rem;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+  }
+  #wake-banner.ready {
+    background: rgba(34,197,94,0.1);
+    border-color: rgba(34,197,94,0.3);
+    color: var(--success);
+  }
+  #wake-banner svg { flex-shrink: 0; }
+  .wake-spin { animation: spin 0.9s linear infinite; }
 </style>
 </head>
 <body>
@@ -180,6 +202,14 @@
   <h1>Knowledge <span>Query</span></h1>
   <p class="subtitle">BM25 retrieval · Claude Haiku · temporal snapshots</p>
 </header>
+
+<div id="wake-banner">
+  <svg id="wake-icon" class="wake-spin" width="16" height="16" viewBox="0 0 24 24" fill="none">
+    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="60" stroke-dashoffset="20"/>
+  </svg>
+  <span id="wake-text">BM25 ingestion in progress</span>
+  <span id="wake-elapsed" class="ml-1" style="font-family:monospace;opacity:0.7"></span>
+</div>
 
 <form id="form">
   <textarea id="question" placeholder="Ask a question about the knowledge base…" required></textarea>
@@ -211,6 +241,47 @@ const metaEl = document.getElementById("meta");
 const conflictEl = document.getElementById("conflict-note");
 const sourcesWrap = document.getElementById("sources-wrap");
 const sourcesEl = document.getElementById("sources");
+const wakeBanner = document.getElementById("wake-banner");
+const wakeText = document.getElementById("wake-text");
+const wakeIcon = document.getElementById("wake-icon");
+const wakeElapsed = document.getElementById("wake-elapsed");
+
+let _backendReady = false;
+const SLOW_MS = 800;
+
+(function pollHealth() {
+  const t0 = Date.now();
+  let slowTimer = setTimeout(() => {
+    wakeBanner.style.display = "flex";
+    submitBtn.disabled = true;
+    const tick = setInterval(() => {
+      if (_backendReady) { clearInterval(tick); return; }
+      wakeElapsed.textContent = ((Date.now() - t0) / 1000).toFixed(1) + "s";
+    }, 200);
+  }, SLOW_MS);
+
+  function check() {
+    fetch("/health").then(r => r.json()).then(d => {
+      const ready = d.api && d.api.ready;
+      if (ready) {
+        clearTimeout(slowTimer);
+        _backendReady = true;
+        submitBtn.disabled = false;
+        if (wakeBanner.style.display !== "none" && wakeBanner.style.display !== "") {
+          wakeIcon.classList.remove("wake-spin");
+          wakeIcon.innerHTML = '<polyline points="20 6 9 17 4 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>';
+          wakeText.textContent = "Backend ready";
+          wakeElapsed.textContent = "";
+          wakeBanner.classList.add("ready");
+          setTimeout(() => { wakeBanner.style.display = "none"; wakeBanner.classList.remove("ready"); }, 1800);
+        }
+      } else {
+        setTimeout(check, 2000);
+      }
+    }).catch(() => setTimeout(check, 3000));
+  }
+  check();
+})();
 
 questionEl.addEventListener("keydown", (e) => {
   if (e.key === "Enter" && !e.shiftKey) {
