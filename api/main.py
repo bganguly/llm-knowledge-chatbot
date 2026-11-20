@@ -18,6 +18,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from _chunks import _Chunk
+from _preprocess import _url_authority
 from contract import Answer
 from snapshot_loader import load_snapshots
 from solution import KnowledgeSystem
@@ -40,6 +41,21 @@ _startup_time: float = time.monotonic()
 _ready_time: float | None = None
 
 
+def _chunk_fast(t: tuple) -> _Chunk:
+    """Reconstruct a _Chunk from a serialized tuple, bypassing __init__.
+
+    6-tuple (url, title, snapshot_id, taken_on, text, authority): uses the
+    pre-computed authority directly — no _url_authority() call.
+    5-tuple (legacy): falls back to normal construction.
+    """
+    if len(t) == 6:
+        c = object.__new__(_Chunk)
+        c.url, c.title, c.snapshot_id, c.taken_on, c.text, c.authority = t
+        return c
+    url, title, snapshot_id, taken_on, text = t
+    return _Chunk(url, title, snapshot_id, taken_on, text)
+
+
 def _ingest_background():
     global _ks, _ready, _ingest_error, _ready_time
     t0 = time.monotonic()
@@ -54,8 +70,7 @@ def _ingest_background():
             chunks_raw = state.pop("_chunks_raw", None)
             if chunks_raw is not None:
                 state["_chunks_by_snapshot"] = {
-                    sid: [_Chunk(url, title, snapshot_id, taken_on, text)
-                          for (url, title, snapshot_id, taken_on, text) in tuples]
+                    sid: [_chunk_fast(t) for t in tuples]
                     for sid, tuples in chunks_raw.items()
                 }
             for attr, val in state.items():

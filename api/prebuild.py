@@ -29,7 +29,7 @@ for snap in snaps:
     print(f"  ingested {snap.snapshot_id}", flush=True)
 
 chunks_raw = {
-    sid: [(c.url, c.title, c.snapshot_id, c.taken_on, c.text) for c in chunks]
+    sid: [(c.url, c.title, c.snapshot_id, c.taken_on, c.text, c.authority) for c in chunks]
     for sid, chunks in ks._chunks_by_snapshot.items()
 }
 total_chunks = sum(len(v) for v in chunks_raw.values())
@@ -38,7 +38,6 @@ print(f"  chunks: {len(chunks_raw)} snapshots, {total_chunks} total chunks", flu
 state = {
     "_chunks_raw":     chunks_raw,
     "_snapshot_dates": ks._snapshot_dates,
-    "_page_history":   ks._page_history,
     "_conflicts":      ks._conflicts,
 }
 with open(out_path, "wb") as f:
