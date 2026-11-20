@@ -5,6 +5,7 @@ Reads snapshots from SNAPSHOTS_PATH at startup, then serves POST /query.
 from __future__ import annotations
 
 import os
+import pickle
 import sys
 import threading
 import time
@@ -37,20 +38,29 @@ _ingest_error: str | None = None
 def _ingest_background():
     global _ks, _ready, _ingest_error
     try:
-        snapshots_path = os.environ.get("SNAPSHOTS_PATH")
-        if not snapshots_path:
-            _ingest_error = "SNAPSHOTS_PATH env var is required"
-            return
-        snaps = load_snapshots(snapshots_path)
-        if not snaps:
-            _ingest_error = f"No snapshots found in {snapshots_path}"
-            return
+        index_pkl = Path("/app/index.pkl")
         ks = KnowledgeSystem()
-        for snap in snaps:
-            ks.ingest(snap)
+        if index_pkl.exists():
+            with open(index_pkl, "rb") as f:
+                state = pickle.load(f)
+            for attr, val in state.items():
+                setattr(ks, attr, val)
+            ks._bm25_dirty = True
+            print("Loaded pre-built index from /app/index.pkl", flush=True)
+        else:
+            snapshots_path = os.environ.get("SNAPSHOTS_PATH")
+            if not snapshots_path:
+                _ingest_error = "SNAPSHOTS_PATH env var is required"
+                return
+            snaps = load_snapshots(snapshots_path)
+            if not snaps:
+                _ingest_error = f"No snapshots found in {snapshots_path}"
+                return
+            for snap in snaps:
+                ks.ingest(snap)
+            print(f"Ingested {len(snaps)} snapshot(s) from disk", flush=True)
         _ks = ks
         _ready = True
-        print(f"Ingested {len(snaps)} snapshot(s)", flush=True)
     except Exception as exc:
         _ingest_error = str(exc)
         print(f"Ingest failed: {exc}", flush=True)

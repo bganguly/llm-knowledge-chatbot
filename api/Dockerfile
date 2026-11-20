@@ -9,5 +9,7 @@ COPY . .
 
 ENV SNAPSHOTS_PATH=/app/snapshots
 
+RUN ANTHROPIC_API_KEY=prebuild-placeholder python3 prebuild.py
+
 EXPOSE 8080
 CMD exec uvicorn main:app --host 0.0.0.0 --port ${PORT:-8080}
