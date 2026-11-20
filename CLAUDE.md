@@ -33,11 +33,20 @@ This repo must contain zero references to any specific company, domain, or organ
 
 ## Env vars required to run
 
-| Var | Where used |
-|---|---|
-| `ANTHROPIC_API_KEY` | `api/main.py` → passed to `KnowledgeSystem` → Anthropic SDK |
-| `SNAPSHOTS_PATH` | `api/main.py` startup — absolute path to a snapshots directory |
-| `API_URL` | CF Worker secret — URL of the running Python API |
+| Var | Where set | Notes |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | GCP Secret Manager (via `deploy.sh`) | Python API |
+| `SNAPSHOTS_PATH` | local env / build context | Python API startup |
+| `API_URL` | CF Worker secret | URL of the running Python API |
+| `KNOWLEDGE_BASE_URL` | CF Worker secret | Root URL of the indexed site — not committed; see `.env.example` for the placeholder |
+
+### CF Worker secrets — do not commit, do not use `wrangler secret put` during normal flow
+
+Secrets (`API_URL`, `KNOWLEDGE_BASE_URL`) are set once via `wrangler secret put <VAR>` and
+persist across all subsequent deploys. **Never put them in `wrangler.toml` or any committed file.**
+`deploy.sh` handles code + GCP; CF Worker code deploys automatically on `git push` via CF git
+integration. The only time to run `wrangler secret put` is when first provisioning or changing a
+secret value. See `.env.example` for the full list of vars and their purpose.
 
 ## Running locally
 

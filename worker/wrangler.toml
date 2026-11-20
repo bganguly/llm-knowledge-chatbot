@@ -4,3 +4,6 @@ compatibility_date = "2024-11-01"
 
 [vars]
 API_URL = "https://llm-kb-backend-77y7e2wykq-uc.a.run.app"
+# KNOWLEDGE_BASE_URL is set as a Worker secret (not committed).
+# To set or update: wrangler secret put KNOWLEDGE_BASE_URL
+# Value is the root URL of the site whose content is indexed (see .env.example).
