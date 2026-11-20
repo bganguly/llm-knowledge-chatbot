@@ -4,8 +4,8 @@ function buildUI(kbUrl) {
     ? '<a href="' + kbUrl + '" target="_blank" rel="noopener noreferrer" style="color:var(--accent-hover);text-decoration:none">' + kbDisplay + '</a>'
     : '';
   const kbNote = kbUrl
-    ? 'Queries content snapshots from <strong>' + kbLink + '</strong> captured over the past several months.'
-    : 'Queries a curated set of content snapshots captured over the past several months.';
+    ? 'Much of the content is sourced from ' + kbLink + '. The chatbot queries curated snapshots of that site captured over the past several months.'
+    : 'The chatbot queries a curated set of content snapshots captured over the past several months.';
   return `<!doctype html>
 <html lang="en">
 <head>
