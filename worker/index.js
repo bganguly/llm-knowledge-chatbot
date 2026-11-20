@@ -194,7 +194,7 @@ form.addEventListener("submit", async (e) => {
       answerCard.textContent = data.detail || data.error || "Error from API";
     } else {
       answerCard.className = data.confident ? "answer-card" : "answer-card uncertain";
-      answerCard.innerHTML = data.answer.replace(/https?:\/\/[^\s<>"']+/g, u => '<a href="' + u + '" target="_blank" rel="noopener noreferrer" style="color:var(--accent-hover);text-decoration:underline">' + u + '</a>');
+      answerCard.innerHTML = data.answer.replace(/https?:\\/\\/[^\\s<>"']+/g, u => '<a href="' + u + '" target="_blank" rel="noopener noreferrer" style="color:var(--accent-hover);text-decoration:underline">' + u + '</a>');
       metaEl.innerHTML = '<span class="badge ' + (data.confident ? "ok" : "warn") + '">' + (data.confident ? "confident" : "uncertain") + '</span><span>' + data.latency_ms + ' ms</span>';
       if (data.conflict_note) { conflictEl.textContent = "⚠ " + data.conflict_note; conflictEl.style.display = "block"; }
       if (data.sources && data.sources.length) {
