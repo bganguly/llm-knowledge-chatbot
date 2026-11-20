@@ -129,7 +129,7 @@ const wakeIcon = document.getElementById("wake-icon");
 const wakeElapsed = document.getElementById("wake-elapsed");
 
 let _backendReady = false;
-const SLOW_MS = 800;
+const SLOW_MS = 250;
 
 (function pollHealth() {
   const t0 = Date.now();
