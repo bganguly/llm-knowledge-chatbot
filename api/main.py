@@ -17,6 +17,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from _chunks import _Chunk
 from contract import Answer
 from snapshot_loader import load_snapshots
 from solution import KnowledgeSystem
@@ -50,6 +51,13 @@ def _ingest_background():
             print(f"[startup] loading /app/index.pkl ({pkl_size_kb} KB) ...", flush=True)
             with open(index_pkl, "rb") as f:
                 state = pickle.load(f)
+            chunks_raw = state.pop("_chunks_raw", None)
+            if chunks_raw is not None:
+                state["_chunks_by_snapshot"] = {
+                    sid: [_Chunk(url, title, snapshot_id, taken_on, text)
+                          for (url, title, snapshot_id, taken_on, text) in tuples]
+                    for sid, tuples in chunks_raw.items()
+                }
             for attr, val in state.items():
                 setattr(ks, attr, val)
             elapsed = time.monotonic() - t0
