@@ -1,5 +1,5 @@
-cf-knowledge-query
-==================
+llm-knowledge-chatbot
+=====================
 
 An interactive knowledge query interface backed by **BM25 retrieval** and **Claude Haiku**.
 A Cloudflare Worker serves the UI and proxies queries to a **Python FastAPI** backend
@@ -16,7 +16,7 @@ Live Service
 
 | Endpoint | URL |
 |---|---|
-| UI | _deploy to set_ |
+| UI | https://llm-knowledge-chatbot.gangulybikramjit.workers.dev |
 | Worker health | `GET /health` |
 | Query API | `POST /query` |
 
