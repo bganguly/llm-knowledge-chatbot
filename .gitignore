@@ -4,6 +4,7 @@ __pycache__/
 .venv/
 venv/
 .env
+.env.gcp
 snapshots/
 snapshots_zip/
 *.zip
