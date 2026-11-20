@@ -99,7 +99,7 @@ const UI = `<!doctype html>
   <span id="wake-elapsed" style="font-family:monospace;opacity:0.7"></span>
 </div>
 <form id="form">
-  <textarea id="question" placeholder="Ask a question about the knowledge base…" required></textarea>
+  <textarea id="question" placeholder="Ask anything, or try a sample query:&#10;• What are the mortgage rates right now?&#10;• What credit cards are offered and what are their APRs?&#10;• What free insurance benefit does the credit union provide to member-owners?" required></textarea>
   <div class="row">
     <button type="submit" id="submit-btn">Ask</button>
   </div>

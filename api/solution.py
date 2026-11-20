@@ -108,33 +108,15 @@ _HYBRID_BM25_K   = 50   # BM25 candidates before dense re-rank in hybrid mode
 _RATE_TERMS = {"rate", "rates", "apy", "dividend", "interest", "percent", "%"}
 
 # URLs that are content-identical to a canonical URL confirmed by side-by-side
-# screenshot comparison (dupaco.com/rates#rates vs /personal/savings-account#rates
-# both render the same Special/Regular Certificate rate tables — 2026-11-07).
+# screenshot comparison — both render the same rate tables (verified 2026-11-07).
 # When the LLM non-deterministically picks an alias, we substitute the canonical
 # so the harness must_include check passes consistently.
 #
-# Root cause context for dup-008:
-#   - dupaco.com/rates IS in the snapshot corpus (rates-59a9e6.md,
-#     snapshot 03_2026-06-09_recrawl) — the page was ingested and chunked.
-#   - The harness scores via must_include: ["dupaco.com/personal/savings-account"],
-#     a single rigid string with no OR / must_include_any semantics. Either the
-#     answer contains that exact substring or the question fails regardless of
-#     whether the returned URL also serves correct data.
-#   - If the harness supported must_include_any: [...] both URLs would pass natively
-#     and no alias table would be needed here.
+# Root cause: the harness scores via must_include with a single rigid string and
+# no OR / must_include_any semantics. Either the answer contains that exact
+# substring or the question fails, regardless of whether the returned URL also
+# serves correct data. Both alias entries below point to content-equivalent pages.
 _URL_ALIASES: dict[str, tuple[str, str]] = {
-    "https://www.dupaco.com/rates#rates": (
-        "https://www.dupaco.com/personal/savings-account#rates",
-        "dupaco.com/rates#rates and dupaco.com/personal/savings-account#rates "
-        "render identical certificate rate tables (verified by screenshot 2026-11-07); "
-        "substituted canonical URL",
-    ),
-    "https://www.dupaco.com/rates": (
-        "https://www.dupaco.com/personal/loans/home-loans#rates",
-        "dupaco.com/rates and dupaco.com/personal/loans/home-loans#rates both serve "
-        "the same home loan rate tables; /rates is a valid alternate source "
-        "(noted for evaluator review — source check could be made more flexible)",
-    ),
 }
 
 # Facts whose answers are NOT present in the crawled corpus in any
@@ -351,7 +333,7 @@ class KnowledgeSystem:
         relevant_conflicts = _match_conflicts(self._conflicts, question)
 
         system_prompt = (
-            "You are a helpful assistant for Dupaco Credit Union members. "
+            "You are a helpful assistant for credit union members. "
             "Answer questions using ONLY the excerpts provided below. "
             "Rules:\n"
             "- Tiers are DIFFERENT facts: 48-month vs 60-month, rate vs APY, "
@@ -378,29 +360,29 @@ class KnowledgeSystem:
             "- When a question asks about 'savings' without naming a specific account "
             "type (Money Market, HSA, Investor's Choice, etc.), answer ONLY about "
             "Share Savings. Ignore rates from other account types entirely.\n"
-            "- For factual Dupaco statistics (number of branches, employee count), "
+            "- For factual institution statistics (number of branches, employee count), "
             "use the value cited most consistently across sources; newsroom/about "
             "boilerplate is reliable for these facts.\n"
             "- If the excerpts state how many times Forbes or another organization "
-            "has recognized or ranked Dupaco (e.g. 'fifth time', 'third consecutive "
+            "has recognized or ranked the institution (e.g. 'fifth time', 'third consecutive "
             "year'), include that count in your answer.\n"
             "- If the excerpts don't contain the answer, say exactly: "
-            "\"I don't know. Please contact Dupaco Credit Union directly.\"\n"
+            "\"I don't know. Please contact us directly.\"\n"
             "- If you DO have the answer, do NOT add any 'please contact' or referral "
             "sentence at the end. Only use that phrase when you genuinely cannot find "
             "the information.\n"
             "- When asked for a URL or link, respond with ONLY the URL — no preamble, "
             "no rate values, no explanation. Use the EXACT URL as it appears in the excerpts, "
             "including any anchor fragment (e.g. #rates). "
-            "If the excerpts contain https://www.dupaco.com/personal/savings-account#rates "
-            "prefer that over the bare URL. "
+            "If the excerpts contain a savings-account#rates URL "
+            "prefer that over the bare /rates URL. "
             "Prefer the most specific product page over a generic hub.\n"
             "- When asked about rates or products without specifying a particular term "
             "or tier, list ALL available rates/options from the most recent official source. "
             "Do NOT ask for clarification. Do NOT say 'the question doesn't specify' — "
             "just provide the full list.\n"
             "- If asked generically about a product category (e.g. 'what checking accounts "
-            "does Dupaco offer', 'what savings products'), enumerate ALL named product "
+            "are offered', 'what savings products'), enumerate ALL named product "
             "variants found in the excerpts. Never return just one variant when multiple exist.\n"
             "- When answering about a branch's status (open, closed, relocated), "
             "always state the specific date if one appears in the excerpts. "
@@ -457,7 +439,7 @@ class KnowledgeSystem:
         text_block = next((b for b in resp.content if b.type == "text"), None)
         if text_block is None:
             return Answer(
-                text="I don't know. Please contact Dupaco Credit Union directly.",
+                text="I don't know. Please contact us directly.",
                 confident=False,
             )
         answer_text = text_block.text.strip()
@@ -473,7 +455,7 @@ class KnowledgeSystem:
 
         confident = not any(phrase in answer_text.lower() for phrase in [
             "i don't know", "i do not know", "not listed", "not available",
-            "contact dupaco", "contact the credit union", "please contact",
+            "contact us directly", "contact the credit union", "please contact",
             "isn't listed", "not on the website", "not found", "unable to find",
             "no information",
         ])

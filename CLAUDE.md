@@ -29,7 +29,7 @@ The copied files in `api/` are intentionally committed. No sync is needed at run
 
 ## No company-specific hardcoding
 
-This repo must contain zero references to any specific company, domain, or organization name in code, comments, or configuration. The pipeline is generic. If you see `dupaco` or any other company name in code, remove it.
+This repo must contain zero references to any specific company, domain, or organization name in code, comments, or configuration. The pipeline is generic. If you see any company name hardcoded in code, remove it.
 
 ## Env vars required to run
 
