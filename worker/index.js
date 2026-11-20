@@ -36,8 +36,15 @@ const UI = `<!doctype html>
   textarea {
     background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
     color: var(--text); font-size: 0.95rem; line-height: 1.5; padding: 14px 16px;
-    resize: vertical; min-height: 90px; outline: none; transition: border-color 0.15s; width: 100%;
+    resize: vertical; min-height: 80px; outline: none; transition: border-color 0.15s; width: 100%;
   }
+  .samples { display: flex; flex-wrap: wrap; gap: 8px; margin-top: -4px; }
+  .sample-btn {
+    background: var(--source-bg); border: 1px solid var(--border); border-radius: 20px;
+    color: var(--accent-hover); cursor: pointer; font-size: 0.75rem; padding: 4px 12px;
+    transition: border-color 0.15s, background 0.15s; white-space: normal; text-align: left;
+  }
+  .sample-btn:hover { border-color: var(--accent); background: var(--surface); }
   textarea:focus { border-color: var(--accent); }
   textarea::placeholder { color: var(--muted); }
   .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
@@ -99,7 +106,12 @@ const UI = `<!doctype html>
   <span id="wake-elapsed" style="font-family:monospace;opacity:0.7"></span>
 </div>
 <form id="form">
-  <textarea id="question" placeholder="Ask anything, or try a sample query:&#10;• What are the mortgage rates right now?&#10;• What credit cards are offered and what are their APRs?&#10;• What free insurance benefit does the credit union provide to member-owners?" required></textarea>
+  <textarea id="question" placeholder="Ask a question about the knowledge base…" required></textarea>
+  <div class="samples">
+    <button type="button" class="sample-btn">What are the mortgage rates right now?</button>
+    <button type="button" class="sample-btn">What credit cards are offered and what are their APRs?</button>
+    <button type="button" class="sample-btn">What free insurance benefit does the credit union provide to member-owners?</button>
+  </div>
   <div class="row">
     <button type="submit" id="submit-btn">Ask</button>
   </div>
@@ -164,6 +176,13 @@ const SLOW_MS = 250;
   }
   check();
 })();
+
+document.querySelectorAll(".sample-btn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    questionEl.value = btn.textContent.trim();
+    questionEl.focus();
+  });
+});
 
 questionEl.addEventListener("keydown", (e) => {
   if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); }
