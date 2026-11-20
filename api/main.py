@@ -35,20 +35,29 @@ _ready = False
 _ingest_error: str | None = None
 
 
+_startup_time: float = time.monotonic()
+_ready_time: float | None = None
+
+
 def _ingest_background():
-    global _ks, _ready, _ingest_error
+    global _ks, _ready, _ingest_error, _ready_time
+    t0 = time.monotonic()
     try:
         index_pkl = Path("/app/index.pkl")
         ks = KnowledgeSystem()
         if index_pkl.exists():
+            pkl_size_kb = index_pkl.stat().st_size // 1024
+            print(f"[startup] loading /app/index.pkl ({pkl_size_kb} KB) ...", flush=True)
             with open(index_pkl, "rb") as f:
                 state = pickle.load(f)
             for attr, val in state.items():
                 setattr(ks, attr, val)
             ks._bm25_dirty = True
-            print("Loaded pre-built index from /app/index.pkl", flush=True)
+            elapsed = time.monotonic() - t0
+            print(f"[startup] pickle loaded in {elapsed:.2f}s — ready", flush=True)
         else:
             snapshots_path = os.environ.get("SNAPSHOTS_PATH")
+            print(f"[startup] no index.pkl — full ingest from {snapshots_path}", flush=True)
             if not snapshots_path:
                 _ingest_error = "SNAPSHOTS_PATH env var is required"
                 return
@@ -57,13 +66,17 @@ def _ingest_background():
                 _ingest_error = f"No snapshots found in {snapshots_path}"
                 return
             for snap in snaps:
+                t_snap = time.monotonic()
                 ks.ingest(snap)
-            print(f"Ingested {len(snaps)} snapshot(s) from disk", flush=True)
+                print(f"[startup] ingested {snap.snapshot_id} in {time.monotonic() - t_snap:.2f}s", flush=True)
+            elapsed = time.monotonic() - t0
+            print(f"[startup] full ingest done ({len(snaps)} snapshots) in {elapsed:.2f}s — ready", flush=True)
         _ks = ks
         _ready = True
+        _ready_time = time.monotonic()
     except Exception as exc:
         _ingest_error = str(exc)
-        print(f"Ingest failed: {exc}", flush=True)
+        print(f"[startup] FAILED after {time.monotonic() - t0:.2f}s: {exc}", flush=True)
 
 
 @app.on_event("startup")
@@ -91,10 +104,13 @@ class QueryResponse(BaseModel):
 
 @app.get("/health")
 def health():
+    uptime = time.monotonic() - _startup_time
     return {
         "status": "ok",
         "ready": _ready,
         "error": _ingest_error,
+        "uptime_s": round(uptime, 1),
+        "ready_after_s": round(_ready_time - _startup_time, 1) if _ready_time else None,
     }
 
 
