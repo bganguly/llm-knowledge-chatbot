@@ -108,11 +108,13 @@ const UI = `<!doctype html>
 <form id="form">
   <textarea id="question" placeholder="Ask a question about the knowledge base…" required></textarea>
   <div class="samples">
+    <span style="font-size:0.75rem;color:var(--muted);align-self:center">Try a sample:</span>
     <button type="button" class="sample-btn">What are the mortgage rates right now?</button>
     <button type="button" class="sample-btn">What credit cards are offered and what are their APRs?</button>
     <button type="button" class="sample-btn">What free insurance benefit does the credit union provide to member-owners?</button>
   </div>
   <div class="row">
+    <span style="font-size:0.75rem;color:var(--muted)">Press Enter or click Ask to submit</span>
     <button type="submit" id="submit-btn">Ask</button>
   </div>
 </form>
