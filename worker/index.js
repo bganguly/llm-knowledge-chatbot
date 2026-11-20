@@ -1,4 +1,11 @@
-const UI = `<!doctype html>
+function buildUI(kbUrl) {
+  const kbLink = kbUrl
+    ? `<a href="${kbUrl}" target="_blank" rel="noopener noreferrer" style="color:var(--accent-hover);text-decoration:none">${kbUrl.replace(/^https?:\\/\\//, '')}</a>`
+    : '';
+  const kbNote = kbUrl
+    ? `Queries content snapshots from <strong>${kbLink}</strong> captured over the past several months.`
+    : 'Queries a curated set of content snapshots captured over the past several months.';
+  return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -28,10 +35,17 @@ const UI = `<!doctype html>
     align-items: center;
     padding: 40px 16px 80px;
   }
-  header { width: 100%; max-width: 720px; margin-bottom: 36px; }
+  header { width: 100%; max-width: 720px; margin-bottom: 20px; }
   h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; color: var(--text); }
   h1 span { color: var(--accent); }
   .subtitle { font-size: 0.85rem; color: var(--muted); margin-top: 4px; }
+  .info-card {
+    width: 100%; max-width: 720px; margin-bottom: 24px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 14px 18px; font-size: 0.82rem; color: var(--muted); line-height: 1.6;
+  }
+  .info-card p + p { margin-top: 6px; }
+  .info-card strong { color: var(--text); font-weight: 600; }
   form { width: 100%; max-width: 720px; display: flex; flex-direction: column; gap: 12px; }
   textarea {
     background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
@@ -96,8 +110,12 @@ const UI = `<!doctype html>
 <body>
 <header>
   <h1>Knowledge <span>Query</span></h1>
-  <p class="subtitle">BM25 retrieval · Claude Haiku · temporal snapshots</p>
+  <p class="subtitle">Natural language queries over curated content snapshots · powered by Claude Haiku</p>
 </header>
+<div class="info-card">
+  <p>${kbNote} Answers are grounded strictly in that content — the system returns <strong>"I don't know"</strong> rather than guess.</p>
+  <p>Ask in plain English: no keywords required. BM25 retrieval finds the most relevant excerpts; Claude synthesizes a direct answer with cited sources. A <strong>confidence badge</strong> flags when the retrieved evidence is weak.</p>
+</div>
 <div id="wake-banner">
   <svg id="wake-icon" class="wake-spin" width="16" height="16" viewBox="0 0 24 24" fill="none">
     <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="60" stroke-dashoffset="20"/>
@@ -249,13 +267,14 @@ form.addEventListener("submit", async (e) => {
 </script>
 </body>
 </html>`;
+}
 
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
     if (url.pathname === "/" || url.pathname === "") {
-      return new Response(UI, { headers: { "Content-Type": "text/html;charset=UTF-8" } });
+      return new Response(buildUI(env.KNOWLEDGE_BASE_URL || ""), { headers: { "Content-Type": "text/html;charset=UTF-8" } });
     }
 
     if (url.pathname === "/query" && request.method === "POST") {
