@@ -51,7 +51,7 @@ function buildUI(kbUrl) {
   textarea {
     background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
     color: var(--text); font-size: 0.95rem; line-height: 1.5; padding: 14px 16px;
-    resize: vertical; min-height: 80px; outline: none; transition: border-color 0.15s; width: 100%;
+    resize: vertical; min-height: 110px; outline: none; transition: border-color 0.15s; width: 100%;
   }
   .samples { display: flex; flex-wrap: wrap; gap: 8px; margin-top: -4px; }
   .sample-btn {
@@ -114,8 +114,7 @@ function buildUI(kbUrl) {
   <p class="subtitle">Natural language queries over curated content snapshots · powered by Claude Haiku${kbUrl ? ' · <a href="' + kbUrl + '" target="_blank" rel="noopener noreferrer" style="color:var(--accent-hover);text-decoration:none">' + kbDisplay + '</a>' : ''}</p>
 </header>
 <div class="info-card">
-  <p>${kbNote} Answers are grounded strictly in those snapshots — if the answer isn't there, it returns <strong>"I don't know"</strong> rather than guess.</p>
-  <p>Ask in plain English — no keywords needed. BM25 retrieval finds the most relevant excerpts and Claude synthesizes a direct answer with cited sources. A <strong>confidence badge</strong> flags weak evidence.</p>
+  <p>${kbNote} Answers are grounded strictly in those snapshots — returns <strong>"I don't know"</strong> rather than guess. Ask in plain English; a <strong>confidence badge</strong> flags weak evidence.</p>
 </div>
 <div id="wake-banner">
   <svg id="wake-icon" class="wake-spin" width="16" height="16" viewBox="0 0 24 24" fill="none">
