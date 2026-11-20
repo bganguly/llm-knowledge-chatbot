@@ -59,7 +59,7 @@ const UI = `<!doctype html>
   .badge { background: var(--source-bg); border: 1px solid var(--border); border-radius: 20px; padding: 2px 10px; }
   .badge.warn { border-color: #d97706; color: #fbbf24; }
   .badge.ok { border-color: #166534; color: var(--success); }
-  .sources-label { font-size: 0.8rem; color: var(--muted); font-weight: 600; }
+  .sources-label { font-size: 0.8rem; color: var(--muted); font-weight: 600; line-height: 1.4; }
   .sources { display: flex; flex-wrap: wrap; gap: 8px; }
   .source-chip {
     background: var(--source-bg); border: 1px solid var(--border); border-radius: 6px;
@@ -208,6 +208,12 @@ form.addEventListener("submit", async (e) => {
           a.textContent = s.url.replace(/^https?:\\/\\//, "");
           sourcesEl.appendChild(a);
         });
+        const label = sourcesWrap.querySelector(".sources-label");
+        if (label) {
+          label.innerHTML = data.confident
+            ? "Sources"
+            : "Sources <span style=\\"font-weight:400;color:var(--muted)\\">— raw BM25 chunks, low accuracy when uncertain</span>";
+        }
         sourcesWrap.style.display = "block";
       }
     }
