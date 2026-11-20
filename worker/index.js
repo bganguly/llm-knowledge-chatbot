@@ -4,8 +4,8 @@ function buildUI(kbUrl) {
     ? '<a href="' + kbUrl + '" target="_blank" rel="noopener noreferrer" style="color:var(--accent-hover);text-decoration:none">' + kbDisplay + '</a>'
     : '';
   const kbNote = kbUrl
-    ? 'Much of the content is sourced from ' + kbLink + '. The chatbot queries curated snapshots of that site captured over the past several months.'
-    : 'The chatbot queries a curated set of content snapshots captured over the past several months.';
+    ? 'Content is sourced from <strong>' + kbLink + '</strong> — curated snapshots captured at multiple points over the past several months.'
+    : 'Content comes from curated snapshots captured at multiple points over the past several months.';
   return `<!doctype html>
 <html lang="en">
 <head>
@@ -114,8 +114,8 @@ function buildUI(kbUrl) {
   <p class="subtitle">Natural language queries over curated content snapshots · powered by Claude Haiku</p>
 </header>
 <div class="info-card">
-  <p>${kbNote} Answers are grounded strictly in that content — the system returns <strong>"I don't know"</strong> rather than guess.</p>
-  <p>Ask in plain English: no keywords required. BM25 retrieval finds the most relevant excerpts; Claude synthesizes a direct answer with cited sources. A <strong>confidence badge</strong> flags when the retrieved evidence is weak.</p>
+  <p>${kbNote} Answers are grounded strictly in those snapshots — if the answer isn't there, it returns <strong>"I don't know"</strong> rather than guess.</p>
+  <p>Ask in plain English — no keywords needed. BM25 retrieval finds the most relevant excerpts and Claude synthesizes a direct answer with cited sources. A <strong>confidence badge</strong> flags weak evidence.</p>
 </div>
 <div id="wake-banner">
   <svg id="wake-icon" class="wake-spin" width="16" height="16" viewBox="0 0 24 24" fill="none">
