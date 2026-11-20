@@ -52,7 +52,6 @@ def _ingest_background():
                 state = pickle.load(f)
             for attr, val in state.items():
                 setattr(ks, attr, val)
-            ks._bm25_dirty = True
             elapsed = time.monotonic() - t0
             print(f"[startup] pickle loaded in {elapsed:.2f}s — ready", flush=True)
         else:

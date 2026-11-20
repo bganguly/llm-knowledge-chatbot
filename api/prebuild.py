@@ -30,7 +30,6 @@ for snap in snaps:
 
 state = {
     "_chunks_by_snapshot": ks._chunks_by_snapshot,
-    "_bm25_tokens":        ks._bm25_tokens,
     "_snapshot_dates":     ks._snapshot_dates,
     "_page_history":       ks._page_history,
     "_conflicts":          ks._conflicts,
