@@ -47,7 +47,7 @@ export default {
         headers: { "Content-Type": "application/json" },
       });
       try {
-        const upstream = await fetch(`${apiUrl}/health`);
+        const upstream = await fetch(`${apiUrl}/health`, { signal: AbortSignal.timeout(5000) });
         const data = await upstream.json();
         return new Response(JSON.stringify({ worker: "ok", api: data }), {
           headers: { "Content-Type": "application/json" },
