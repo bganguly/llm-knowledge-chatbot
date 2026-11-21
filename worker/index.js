@@ -162,40 +162,56 @@ const wakeIcon = document.getElementById("wake-icon");
 const wakeElapsed = document.getElementById("wake-elapsed");
 
 let _backendReady = false;
+let _pendingQuestion = null;
 const SLOW_MS = 250;
 const MIN_BANNER_MS = 1500;
 let _bannerShownAt = null;
 
+function _showWakeBanner(t0) {
+  _bannerShownAt = Date.now();
+  wakeIcon.classList.add("wake-spin");
+  wakeIcon.innerHTML = '<circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" stroke-dasharray="60" stroke-dashoffset="20"/>';
+  wakeText.textContent = "Backend waking up from idle";
+  wakeElapsed.textContent = "";
+  wakeBanner.classList.remove("ready");
+  wakeBanner.style.display = "flex";
+  submitBtn.disabled = true;
+  const tick = setInterval(() => {
+    if (_backendReady) { clearInterval(tick); return; }
+    wakeElapsed.textContent = ((Date.now() - t0) / 1000).toFixed(1) + "s";
+  }, 200);
+}
+
+function _onBackendReady() {
+  _backendReady = true;
+  submitBtn.disabled = false;
+  if (wakeBanner.style.display !== "none" && wakeBanner.style.display !== "") {
+    const remaining = _bannerShownAt ? Math.max(0, MIN_BANNER_MS - (Date.now() - _bannerShownAt)) : 0;
+    setTimeout(() => {
+      wakeIcon.classList.remove("wake-spin");
+      wakeIcon.innerHTML = '<polyline points="20 6 9 17 4 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>';
+      wakeText.textContent = "Backend ready";
+      wakeElapsed.textContent = "";
+      wakeBanner.classList.add("ready");
+      setTimeout(() => { wakeBanner.style.display = "none"; wakeBanner.classList.remove("ready"); }, 1800);
+    }, remaining);
+  }
+  if (_pendingQuestion) {
+    const q = _pendingQuestion;
+    _pendingQuestion = null;
+    setTimeout(() => { questionEl.value = q; form.requestSubmit(); }, 400);
+  }
+}
+
 (function pollHealth() {
   const t0 = Date.now();
-  let slowTimer = setTimeout(() => {
-    _bannerShownAt = Date.now();
-    wakeBanner.style.display = "flex";
-    submitBtn.disabled = true;
-    const tick = setInterval(() => {
-      if (_backendReady) { clearInterval(tick); return; }
-      wakeElapsed.textContent = ((Date.now() - t0) / 1000).toFixed(1) + "s";
-    }, 200);
-  }, SLOW_MS);
+  let slowTimer = setTimeout(() => _showWakeBanner(t0), SLOW_MS);
 
   function check() {
     fetch(BASE + "/health").then(r => r.json()).then(d => {
-      const ready = d.ready;
-      if (ready) {
+      if (d.ready) {
         clearTimeout(slowTimer);
-        _backendReady = true;
-        submitBtn.disabled = false;
-        if (wakeBanner.style.display !== "none" && wakeBanner.style.display !== "") {
-          const remaining = _bannerShownAt ? Math.max(0, MIN_BANNER_MS - (Date.now() - _bannerShownAt)) : 0;
-          setTimeout(() => {
-            wakeIcon.classList.remove("wake-spin");
-            wakeIcon.innerHTML = '<polyline points="20 6 9 17 4 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>';
-            wakeText.textContent = "Backend ready";
-            wakeElapsed.textContent = "";
-            wakeBanner.classList.add("ready");
-            setTimeout(() => { wakeBanner.style.display = "none"; wakeBanner.classList.remove("ready"); }, 1800);
-          }, remaining);
-        }
+        _onBackendReady();
       } else {
         setTimeout(check, 2000);
       }
@@ -203,6 +219,21 @@ let _bannerShownAt = null;
   }
   check();
 })();
+
+function _triggerWakeAndRetry(question) {
+  _backendReady = false;
+  _pendingQuestion = question;
+  answerCard.className = "answer-card";
+  answerCard.textContent = "Backend waking up — will retry your question automatically…";
+  resultEl.style.display = "flex";
+  const t0 = Date.now();
+  _showWakeBanner(t0);
+  (function repoll() {
+    fetch(BASE + "/health").then(r => r.json()).then(d => {
+      if (d.ready) { _onBackendReady(); } else { setTimeout(repoll, 2000); }
+    }).catch(() => setTimeout(repoll, 3000));
+  })();
+}
 
 document.querySelectorAll(".sample-btn").forEach(btn => {
   btn.addEventListener("click", () => {
@@ -228,12 +259,18 @@ form.addEventListener("submit", async (e) => {
   sourcesWrap.style.display = "none";
   sourcesEl.innerHTML = "";
   resultEl.style.display = "flex";
+  let _wake = false;
   try {
     const res = await fetch(BASE + "/query", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ question }),
     });
+    if (res.status === 503) {
+      _wake = true;
+      _triggerWakeAndRetry(question);
+      return;
+    }
     const data = await res.json();
     if (!res.ok) {
       answerCard.className = "answer-card error";
@@ -264,11 +301,15 @@ form.addEventListener("submit", async (e) => {
       }
     }
   } catch (err) {
-    answerCard.className = "answer-card error";
-    answerCard.textContent = "Network error: " + err.message;
+    if (!_wake) {
+      answerCard.className = "answer-card error";
+      answerCard.textContent = "Network error: " + err.message;
+    }
   } finally {
-    submitBtn.disabled = false;
-    submitBtn.textContent = "Ask";
+    if (!_wake) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Ask";
+    }
   }
 });
 </script>
