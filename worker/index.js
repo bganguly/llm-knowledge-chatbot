@@ -163,10 +163,13 @@ const wakeElapsed = document.getElementById("wake-elapsed");
 
 let _backendReady = false;
 const SLOW_MS = 250;
+const MIN_BANNER_MS = 1500;
+let _bannerShownAt = null;
 
 (function pollHealth() {
   const t0 = Date.now();
   let slowTimer = setTimeout(() => {
+    _bannerShownAt = Date.now();
     wakeBanner.style.display = "flex";
     submitBtn.disabled = true;
     const tick = setInterval(() => {
@@ -183,12 +186,15 @@ const SLOW_MS = 250;
         _backendReady = true;
         submitBtn.disabled = false;
         if (wakeBanner.style.display !== "none" && wakeBanner.style.display !== "") {
-          wakeIcon.classList.remove("wake-spin");
-          wakeIcon.innerHTML = '<polyline points="20 6 9 17 4 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>';
-          wakeText.textContent = "Backend ready";
-          wakeElapsed.textContent = "";
-          wakeBanner.classList.add("ready");
-          setTimeout(() => { wakeBanner.style.display = "none"; wakeBanner.classList.remove("ready"); }, 1800);
+          const remaining = _bannerShownAt ? Math.max(0, MIN_BANNER_MS - (Date.now() - _bannerShownAt)) : 0;
+          setTimeout(() => {
+            wakeIcon.classList.remove("wake-spin");
+            wakeIcon.innerHTML = '<polyline points="20 6 9 17 4 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>';
+            wakeText.textContent = "Backend ready";
+            wakeElapsed.textContent = "";
+            wakeBanner.classList.add("ready");
+            setTimeout(() => { wakeBanner.style.display = "none"; wakeBanner.classList.remove("ready"); }, 1800);
+          }, remaining);
         }
       } else {
         setTimeout(check, 2000);
