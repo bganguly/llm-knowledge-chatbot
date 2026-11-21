@@ -318,6 +318,7 @@ form.addEventListener("submit", async (e) => {
     }
   } finally {
     if (!_wake) {
+      _lastReadyAt = Date.now();
       submitBtn.disabled = false;
       submitBtn.textContent = "Ask";
       if (_earlyBannerShown) {
