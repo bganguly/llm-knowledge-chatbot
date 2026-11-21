@@ -165,7 +165,10 @@ let _backendReady = false;
 let _pendingQuestion = null;
 const SLOW_MS = 250;
 const MIN_BANNER_MS = 1500;
+const IDLE_WAKE_MS = 15 * 60 * 1000;
 let _bannerShownAt = null;
+let _lastReadyAt = null;
+let _earlyBannerShown = false;
 
 function _showWakeBanner(t0) {
   _bannerShownAt = Date.now();
@@ -184,6 +187,7 @@ function _showWakeBanner(t0) {
 
 function _onBackendReady() {
   _backendReady = true;
+  _lastReadyAt = Date.now();
   submitBtn.disabled = false;
   if (wakeBanner.style.display !== "none" && wakeBanner.style.display !== "") {
     const remaining = _bannerShownAt ? Math.max(0, MIN_BANNER_MS - (Date.now() - _bannerShownAt)) : 0;
@@ -259,6 +263,13 @@ form.addEventListener("submit", async (e) => {
   sourcesWrap.style.display = "none";
   sourcesEl.innerHTML = "";
   resultEl.style.display = "flex";
+  _earlyBannerShown = false;
+  const _idleMs = _lastReadyAt ? Date.now() - _lastReadyAt : Infinity;
+  if (_idleMs > IDLE_WAKE_MS) {
+    _earlyBannerShown = true;
+    _backendReady = false;
+    _showWakeBanner(Date.now());
+  }
   let _wake = false;
   try {
     const res = await fetch(BASE + "/query", {
@@ -309,6 +320,10 @@ form.addEventListener("submit", async (e) => {
     if (!_wake) {
       submitBtn.disabled = false;
       submitBtn.textContent = "Ask";
+      if (_earlyBannerShown) {
+        _earlyBannerShown = false;
+        _onBackendReady();
+      }
     }
   }
 });
