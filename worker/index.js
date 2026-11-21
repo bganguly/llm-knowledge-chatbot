@@ -1,4 +1,4 @@
-function buildUI(kbUrl) {
+function buildUI(kbUrl, apiUrl) {
   const kbDisplay = kbUrl ? kbUrl.replace(/^https?:\/\//, '') : '';
   const kbLink = kbUrl
     ? '<a href="' + kbUrl + '" target="_blank" rel="noopener noreferrer" style="color:var(--accent-hover);text-decoration:none">' + kbDisplay + '</a>'
@@ -146,6 +146,7 @@ function buildUI(kbUrl) {
   </div>
 </div>
 <script>
+const BASE = "${apiUrl || ''}";
 const form = document.getElementById("form");
 const questionEl = document.getElementById("question");
 const submitBtn = document.getElementById("submit-btn");
@@ -175,8 +176,8 @@ const SLOW_MS = 250;
   }, SLOW_MS);
 
   function check() {
-    fetch("/health").then(r => r.json()).then(d => {
-      const ready = d.api && d.api.ready;
+    fetch(BASE + "/health").then(r => r.json()).then(d => {
+      const ready = d.ready;
       if (ready) {
         clearTimeout(slowTimer);
         _backendReady = true;
@@ -222,7 +223,7 @@ form.addEventListener("submit", async (e) => {
   sourcesEl.innerHTML = "";
   resultEl.style.display = "flex";
   try {
-    const res = await fetch("/query", {
+    const res = await fetch(BASE + "/query", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ question }),
@@ -274,52 +275,7 @@ export default {
     const url = new URL(request.url);
 
     if (url.pathname === "/" || url.pathname === "") {
-      return new Response(buildUI(env.KNOWLEDGE_BASE_URL || ""), { headers: { "Content-Type": "text/html;charset=UTF-8" } });
-    }
-
-    if (url.pathname === "/query" && request.method === "POST") {
-      const apiUrl = env.API_URL;
-      if (!apiUrl) {
-        return new Response(JSON.stringify({ detail: "API_URL not configured" }), {
-          status: 503, headers: { "Content-Type": "application/json" },
-        });
-      }
-      const body = await request.text();
-      try {
-        const upstream = await fetch(`${apiUrl}/query`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body,
-        });
-        const data = await upstream.text();
-        return new Response(data, {
-          status: upstream.status,
-          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-        });
-      } catch (err) {
-        return new Response(JSON.stringify({ detail: "Backend unreachable — still waking up, please retry" }), {
-          status: 503,
-          headers: { "Content-Type": "application/json", "Access-Control-Allow-Origin": "*" },
-        });
-      }
-    }
-
-    if (url.pathname === "/health") {
-      const apiUrl = env.API_URL;
-      if (!apiUrl) return new Response(JSON.stringify({ worker: "ok", api: "not configured" }), {
-        headers: { "Content-Type": "application/json" },
-      });
-      try {
-        const upstream = await fetch(`${apiUrl}/health`, { signal: AbortSignal.timeout(5000) });
-        const data = await upstream.json();
-        return new Response(JSON.stringify({ worker: "ok", api: data }), {
-          headers: { "Content-Type": "application/json" },
-        });
-      } catch (e) {
-        return new Response(JSON.stringify({ worker: "ok", api: "unreachable" }), {
-          headers: { "Content-Type": "application/json" },
-        });
-      }
+      return new Response(buildUI(env.KNOWLEDGE_BASE_URL || "", env.API_URL || ""), { headers: { "Content-Type": "text/html;charset=UTF-8" } });
     }
 
     return new Response("Not found", { status: 404 });
